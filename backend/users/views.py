@@ -42,3 +42,14 @@ class FoodgramUserViewSet(UserViewSet):
             get_object_or_404(Subscription, subscriber=subscriber,
                               subscribed_to=subscription_target).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, permission_classes=[IsAuthenticated])
+    def subscriptions(self, request):
+        current_user = request.user
+        subscriptions = current_user.subscriptions.all()
+
+        page = self.paginate_queryset(subscriptions)
+        serializer = SubscriptionSerializer(page,
+                                            many=True,
+                                            context={'request': request})
+        return self.get_paginated_response(serializer.data)
