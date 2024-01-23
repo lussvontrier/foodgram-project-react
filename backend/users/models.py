@@ -1,5 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 USER_FIELD_MAX_LENGTH = 150
 USER_EMAIL_FIELD_MAX_LENGTH = 254
@@ -27,3 +30,34 @@ class FoodgramUser(AbstractUser):
 
     def __str__(self):
         return self.username
+
+
+class Subscription(models.Model):
+    subscriber = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='subscriptions',
+        help_text='The user who is subscribing to another user'
+    )
+    subscribed_to = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='subscribers',
+        help_text='The user who is being subscribed to'
+    )
+
+    class Meta:
+        verbose_name = 'Subscription'
+        verbose_name_plural = 'Subscriptions'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'following'),
+                name='unique_name_owner'
+            ),
+            models.CheckConstraint(
+                check=~models.Q(user=models.F('following')),
+                name='prevent_self_follow')
+        ]
+
+    def __str__(self):
+        return f"{self.subscriber} subscribes to {self.subscribed_to}"

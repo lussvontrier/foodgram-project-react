@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-from datetime import timedelta
 
 load_dotenv()
 
@@ -21,6 +20,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'djoser',
     'users',
     'api',
@@ -110,10 +110,15 @@ REST_FRAMEWORK = {
 }
 
 DJOSER = {
+    'HIDE_USERS': False,
     'LOGIN_FIELD': 'email',
     'SERIALIZERS': {
         'user_create': 'users.serializers.FoodgramUserCreateSerializer',
         'user': 'users.serializers.FoodgramUserSerializer',
         'current_user': 'users.serializers.FoodgramUserSerializer',
+    },
+    'PERMISSIONS': {
+        'user_list': ['rest_framework.permissions.AllowAny'],
+        'user': ['rest_framework.permissions.IsAuthenticated'],
     },
 }
