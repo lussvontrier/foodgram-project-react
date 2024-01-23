@@ -1,8 +1,6 @@
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
 
 USER_FIELD_MAX_LENGTH = 150
 USER_EMAIL_FIELD_MAX_LENGTH = 254
@@ -34,13 +32,13 @@ class FoodgramUser(AbstractUser):
 
 class Subscription(models.Model):
     subscriber = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='subscriptions',
         help_text='The user who is subscribing to another user'
     )
     subscribed_to = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='subscribers',
         help_text='The user who is being subscribed to'
@@ -51,11 +49,11 @@ class Subscription(models.Model):
         verbose_name_plural = 'Subscriptions'
         constraints = [
             models.UniqueConstraint(
-                fields=('user', 'following'),
+                fields=('subscriber', 'subscribed_to'),
                 name='unique_name_owner'
             ),
             models.CheckConstraint(
-                check=~models.Q(user=models.F('following')),
+                check=~models.Q(subscriber=models.F('subscribed_to')),
                 name='prevent_self_follow')
         ]
 
