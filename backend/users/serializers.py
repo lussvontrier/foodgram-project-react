@@ -35,9 +35,8 @@ class SubscriptionSerializer(FoodgramUserSerializer):
         fields = FoodgramUserSerializer.Meta.fields + ('recipes',
                                                        'recipes_count',)
 
-    # or change to get it with annotate
     def get_recipes_count(self, obj):
-        pass
+        return obj.recipes.count()
 
     def get_recipes(self, obj):
         pass
