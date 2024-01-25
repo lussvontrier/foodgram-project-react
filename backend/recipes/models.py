@@ -90,3 +90,51 @@ class IngredientRecipe(models.Model):
             f'Recipe of {self.recipe} needs {self.ingredient}'
             f' in the amount of {self.amount}'
         )
+
+
+class FavoriteRecipe(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name='favorites',
+        on_delete=models.CASCADE,
+        verbose_name='User'
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        related_name='favorited_by',
+        on_delete=models.CASCADE,
+        verbose_name='Recipe'
+    )
+
+    class Meta:
+        verbose_name = 'Favorite Recipe'
+        verbose_name_plural = 'Favorite Recipes'
+
+    def __str__(self):
+        return (
+            f'{self.recipe} favorited by {self.user}'
+        )
+
+
+class ShoppingList(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name='recipes_in_shopping_list',
+        on_delete=models.CASCADE,
+        verbose_name='User'
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        related_name='added_to_shopping_list_by',
+        on_delete=models.CASCADE,
+        verbose_name='Recipe'
+    )
+
+    class Meta:
+        verbose_name = 'Shopping List'
+        verbose_name_plural = 'Shopping Lists'
+
+    def __str__(self):
+        return (
+            f'{self.recipe} added to shopping list by {self.user}'
+        )
