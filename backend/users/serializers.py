@@ -2,6 +2,7 @@ from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework.fields import SerializerMethodField
 
 from users.models import FoodgramUser
+from api.serializers import RecipeSummarySerializer
 
 
 class FoodgramUserCreateSerializer(UserCreateSerializer):
@@ -39,4 +40,13 @@ class SubscriptionSerializer(FoodgramUserSerializer):
         return obj.recipes.count()
 
     def get_recipes(self, obj):
-        pass
+        request = self.context.get('request')
+        recipes_limit = request.query_params.get('recipes_limit')
+        recipes = obj.recipes.all()
+
+        if recipes_limit and recipes_limit.isdigit():
+            recipes_limit = int(recipes_limit)
+            recipes = recipes[:recipes_limit]
+
+        serializer = RecipeSummarySerializer(recipes, many=True)
+        return serializer.data

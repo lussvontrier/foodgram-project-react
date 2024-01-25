@@ -43,7 +43,7 @@ class FoodgramUserViewSet(UserViewSet):
                               subscribed_to=subscription_target).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=False, permission_classes=[IsAuthenticated])
+    @action(detail=False, permission_classes=(IsAuthenticated,))
     def subscriptions(self, request):
         current_user = request.user
         subscriptions = current_user.subscriptions.all()
