@@ -4,6 +4,7 @@ from rest_framework.filters import SearchFilter
 
 from recipes.models import Tag, Ingredient, Recipe
 from api.serializers import TagSerializer, IngredientSerializer
+from api.pagination import ApiPageNumberPagination
 
 
 class TagViewSet(ReadOnlyModelViewSet):
@@ -20,3 +21,4 @@ class IngredientViewSet(ReadOnlyModelViewSet):
 
 class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
+    pagination_class = ApiPageNumberPagination
