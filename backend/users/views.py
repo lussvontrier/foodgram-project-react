@@ -7,8 +7,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 
 from users.models import FoodgramUser, Subscription
-from users.serializers import FoodgramUserSerializer, SubscriptionSerializer
-from users.pagination import CustomPageNumberPagination
+from api.serializers import FoodgramUserSerializer, SubscriptionSerializer
+from api.pagination import CustomPageNumberPagination
 
 
 class FoodgramUserViewSet(UserViewSet):
