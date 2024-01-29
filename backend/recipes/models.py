@@ -29,6 +29,7 @@ class Tag(models.Model):
     )
 
     class Meta:
+        ordering = ('-id',)
         verbose_name = 'Tag'
         verbose_name_plural = 'Tags'
 
@@ -42,6 +43,7 @@ class Ingredient(models.Model):
                                         max_length=FIELD_MAX_LENGTH)
 
     class Meta:
+        ordering = ('-id',)
         verbose_name = 'Ingredient'
         verbose_name_plural = 'Ingredients'
 
@@ -73,6 +75,7 @@ class Recipe(models.Model):
                                          verbose_name='Ingredients')
 
     class Meta:
+        ordering = ('-id',)
         verbose_name = 'Recipe'
         verbose_name_plural = 'Recipes'
 
@@ -109,6 +112,7 @@ class FavoriteRecipe(models.Model):
     )
 
     class Meta:
+        ordering = ('-id',)
         verbose_name = 'Favorite Recipe'
         verbose_name_plural = 'Favorite Recipes'
 
@@ -133,6 +137,7 @@ class ShoppingList(models.Model):
     )
 
     class Meta:
+        ordering = ('-id',)
         verbose_name = 'Shopping List'
         verbose_name_plural = 'Shopping Lists'
 

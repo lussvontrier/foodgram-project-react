@@ -25,10 +25,13 @@ class FoodgramUserSerializer(UserSerializer):
                   'is_subscribed')
 
     def get_is_subscribed(self, obj):
-        current_user = self.context.get('request').user
-        user_to_check = obj
-        return user_to_check.subscribers.filter(
-            subscriber=current_user).exists()
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            current_user = request.user
+            user_to_check = obj
+            return user_to_check.subscribers.filter(
+                subscriber=current_user).exists()
+        return False
 
 
 class SubscriptionSerializer(FoodgramUserSerializer):

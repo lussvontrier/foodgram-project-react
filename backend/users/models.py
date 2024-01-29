@@ -1,5 +1,4 @@
 from django.db import models
-from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 
 USER_FIELD_MAX_LENGTH = 150
@@ -23,6 +22,7 @@ class FoodgramUser(AbstractUser):
     REQUIRED_FIELDS = ('username', 'password', 'first_name', 'last_name')
 
     class Meta:
+        ordering = ('-id',)
         verbose_name = 'User'
         verbose_name_plural = 'Users'
 
@@ -32,19 +32,20 @@ class FoodgramUser(AbstractUser):
 
 class Subscription(models.Model):
     subscriber = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        FoodgramUser,
         on_delete=models.CASCADE,
         related_name='subscriptions',
         help_text='The user who is subscribing to another user'
     )
     subscribed_to = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        FoodgramUser,
         on_delete=models.CASCADE,
         related_name='subscribers',
         help_text='The user who is being subscribed to'
     )
 
     class Meta:
+        ordering = ('-id',)
         verbose_name = 'Subscription'
         verbose_name_plural = 'Subscriptions'
         constraints = [
