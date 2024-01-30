@@ -253,8 +253,13 @@ class FavoriteSerializer(serializers.ModelSerializer):
         model = FavoriteRecipe
         fields = ('user', 'recipe')
 
+    def validate_recipe(self, recipe):
+        if not Recipe.objects.filter(pk=recipe.pk).exists():
+            raise serializers.ValidationError('Recipe not found.',
+                                              code='not_found')
+        return recipe
+
     def validate(self, data):
-        print('got in FavoriteSerializer validate:', data)
         current_user = data.get('user')
         recipe = data.get('recipe')
 
@@ -267,7 +272,6 @@ class FavoriteSerializer(serializers.ModelSerializer):
             if not current_user.favorites.filter(recipe=recipe).exists():
                 raise serializers.ValidationError(
                     'This recipe is not in Favorites.')
-        print('Passed FavoriteSerializer validate:')
         return data
 
     def to_representation(self, instance):
@@ -279,6 +283,12 @@ class ShoppingListSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShoppingList
         fields = ('user', 'recipe')
+
+    def validate_recipe(self, recipe):
+        if not Recipe.objects.filter(pk=recipe.pk).exists():
+            raise serializers.ValidationError('Recipe not found.',
+                                              code='not_found')
+        return recipe
 
     def validate(self, data):
         current_user = data.get('user')
@@ -295,7 +305,6 @@ class ShoppingListSerializer(serializers.ModelSerializer):
                     recipe=recipe).exists():
                 raise serializers.ValidationError(
                     'This recipe is not in Shopping List.')
-
         return data
 
     def to_representation(self, instance):

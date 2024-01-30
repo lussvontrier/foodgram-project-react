@@ -1,6 +1,7 @@
 import django_filters
+from rest_framework.filters import SearchFilter
 
-from recipes.models import Recipe, Tag
+from recipes.models import Recipe, Tag, Ingredient
 
 
 class RecipeFilter(django_filters.FilterSet):
@@ -38,3 +39,11 @@ class RecipeFilter(django_filters.FilterSet):
         elif user.is_authenticated and value == 0:
             return queryset.exclude(added_to_shopping_list_by__user=user)
         return queryset
+
+
+class IngredientFilter(SearchFilter):
+    search_param = 'name'
+
+    class Meta:
+        model = Ingredient
+        fields = ('name',)

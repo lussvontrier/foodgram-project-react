@@ -16,13 +16,6 @@ class FoodgramUserViewSet(UserViewSet):
     serializer_class = FoodgramUserSerializer
     pagination_class = CustomPageNumberPagination
 
-    # @action(detail=False, methods=('get'),
-    #         permission_classes=(IsAuthenticated,))
-    # def me(self, request):
-    #     user = request.user
-    #     serializer = FoodgramUserSerializer(user)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
-
     @action(detail=True, methods=('post', 'delete'),
             permission_classes=(IsAuthenticated,))
     def subscribe(self, request, id):
@@ -46,8 +39,14 @@ class FoodgramUserViewSet(UserViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         if request.method == 'DELETE':
-            get_object_or_404(Subscription, subscriber=subscriber,
-                              subscribed_to=subscription_target).delete()
+            subscription = Subscription.objects.filter(
+                subscriber=subscriber, subscribed_to=subscription_target
+            ).first()
+
+            if not subscription:
+                raise ValidationError({'error': 'Subscription does not exist'})
+
+            subscription.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, permission_classes=(IsAuthenticated,))

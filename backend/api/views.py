@@ -1,6 +1,5 @@
 
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
-from rest_framework.filters import SearchFilter
 from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.response import Response
@@ -8,13 +7,13 @@ from rest_framework.permissions import (IsAuthenticatedOrReadOnly,
                                         IsAuthenticated)
 
 from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import get_object_or_404
 from django.http.response import HttpResponse
+from django.shortcuts import get_object_or_404
 
 from recipes.models import (Tag, Ingredient, Recipe,
                             FavoriteRecipe, ShoppingList)
 from api.pagination import ApiPageNumberPagination
-from api.filters import RecipeFilter
+from api.filters import RecipeFilter, IngredientFilter
 from api.permissions import IsAuthorOrAdminOrReadOnly
 from api.serializers import (
     TagSerializer, IngredientSerializer,
@@ -30,8 +29,8 @@ class TagViewSet(ReadOnlyModelViewSet):
 class IngredientViewSet(ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    filter_backends = (SearchFilter,)
-    search_fields = ('name',)
+    filter_backends = (IngredientFilter,)
+    search_fields = ('^name',)
 
 
 class RecipeViewSet(ModelViewSet):
@@ -89,12 +88,10 @@ class RecipeViewSet(ModelViewSet):
     @action(detail=True, methods=('post',),
             permission_classes=(IsAuthenticated,))
     def favorite(self, request, pk):
-        recipe = get_object_or_404(Recipe, id=pk)
         data = {
             'user': request.user.id,
-            'recipe': recipe.id
+            'recipe': pk
         }
-        print("data: ", data)
         serializer = FavoriteSerializer(data=data,
                                         context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -103,19 +100,26 @@ class RecipeViewSet(ModelViewSet):
 
     @favorite.mapping.delete
     def unfavorite(self, request, pk):
+        recipe = get_object_or_404(Recipe, id=pk)
         current_user = request.user
-        get_object_or_404(FavoriteRecipe, user=current_user,
-                          recipe=get_object_or_404(Recipe, id=pk)).delete()
+        data = {
+            'user': request.user.id,
+            'recipe': pk
+        }
+        serializer = FavoriteSerializer(data=data,
+                                        context={'request': request})
+        serializer.is_valid(raise_exception=True)
+
+        FavoriteRecipe.objects.get(user=current_user, recipe=recipe).delete()
         return Response({'detail': 'Recipe removed from Favorites.'},
                         status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=('post',),
             permission_classes=(IsAuthenticated,))
     def shopping_cart(self, request, pk):
-        recipe = get_object_or_404(Recipe, id=pk)
         data = {
             'user': request.user.id,
-            'recipe': recipe.id
+            'recipe': pk
         }
         serializer = ShoppingListSerializer(data=data,
                                             context={'request': request})
@@ -125,8 +129,16 @@ class RecipeViewSet(ModelViewSet):
 
     @shopping_cart.mapping.delete
     def remove_from_shopping_cart(self, request, pk):
+        recipe = get_object_or_404(Recipe, id=pk)
+        data = {
+            'user': request.user.id,
+            'recipe': pk
+        }
+        serializer = ShoppingListSerializer(data=data,
+                                            context={'request': request})
+        serializer.is_valid(raise_exception=True)
+
         current_user = request.user
-        get_object_or_404(ShoppingList, user=current_user,
-                          recipe=get_object_or_404(Recipe, id=pk)).delete()
+        ShoppingList.objects.get(user=current_user, recipe=recipe).delete()
         return Response({'detail': 'Recipe removed from Shopping Cart.'},
                         status=status.HTTP_204_NO_CONTENT)
