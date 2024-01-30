@@ -89,11 +89,13 @@ class RecipeViewSet(ModelViewSet):
     @action(detail=True, methods=('post',),
             permission_classes=(IsAuthenticated,))
     def favorite(self, request, pk):
+        print("got into favorite action func")
         recipe = get_object_or_404(Recipe, id=pk)
         data = {
-            'user': request.user,
-            'recipe': recipe
+            'user': request.user.id,
+            'recipe': recipe.id
         }
+        print("data: ", data)
         serializer = FavoriteSerializer(data=data,
                                         context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -101,10 +103,10 @@ class RecipeViewSet(ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @favorite.mapping.delete
-    def unfavorite(self, request, id):
+    def unfavorite(self, request, pk):
         current_user = request.user
         get_object_or_404(FavoriteRecipe, user=current_user,
-                          recipe=get_object_or_404(Recipe, id=id)).delete()
+                          recipe=get_object_or_404(Recipe, id=pk)).delete()
         return Response({'detail': 'Recipe removed from Favorites.'},
                         status=status.HTTP_204_NO_CONTENT)
 
@@ -113,8 +115,8 @@ class RecipeViewSet(ModelViewSet):
     def shopping_cart(self, request, pk):
         recipe = get_object_or_404(Recipe, id=pk)
         data = {
-            'user': request.user,
-            'recipe': recipe
+            'user': request.user.id,
+            'recipe': recipe.id
         }
         serializer = ShoppingListSerializer(data=data,
                                             context={'request': request})
@@ -125,7 +127,7 @@ class RecipeViewSet(ModelViewSet):
     @shopping_cart.mapping.delete
     def remove_from_shopping_cart(self, request, pk):
         current_user = request.user
-        get_object_or_404(ShoppingListSerializer, user=current_user,
-                          recipe=get_object_or_404(Recipe, id=id)).delete()
+        get_object_or_404(ShoppingList, user=current_user,
+                          recipe=get_object_or_404(Recipe, id=pk)).delete()
         return Response({'detail': 'Recipe removed from Shopping Cart.'},
                         status=status.HTTP_204_NO_CONTENT)

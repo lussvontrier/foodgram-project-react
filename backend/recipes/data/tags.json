@@ -1,0 +1,17 @@
+[
+    {
+        "name": "Breakfast",
+        "color": "#00FF00",
+        "slug": "breakfast"
+    },
+    {
+        "name": "Lunch",
+        "color": "#FFFF00",
+        "slug": "lunch"
+    },
+    {
+        "name": "Dinner",
+        "color": "#0000FF",
+        "slug": "dinner"
+    }
+]

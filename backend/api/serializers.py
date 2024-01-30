@@ -39,6 +39,7 @@ class SubscriptionSerializer(FoodgramUserSerializer):
     recipes_count = SerializerMethodField()
 
     class Meta(FoodgramUserSerializer.Meta):
+        model = FoodgramUser
         fields = FoodgramUserSerializer.Meta.fields + ('recipes',
                                                        'recipes_count',)
 
@@ -103,6 +104,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     is_in_shopping_cart = serializers.SerializerMethodField()
     ingredients = IngredientRecipeReadSerializer(many=True,
                                                  source='ingredientrecipe')
+    image = Base64ImageField(max_length=None)
 
     class Meta:
         model = Recipe
@@ -139,7 +141,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         required_fields = ('name', 'cooking_time', 'text',
-                           'tags', 'ingredients')
+                           'tags', 'ingredientrecipe')
 
         for field_name in required_fields:
             if field_name not in data:
@@ -150,67 +152,79 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                     f"'{field_name}' cannot be empty.")
         return data
 
-    def validate_ingredients(self, value):
-        ingredient_ids = [ingredient.get('id') for ingredient in value]
-        existing_ingredient_ids = set(Ingredient.objects.values_list(
-            'id', flat=True))
-        invalid_ingredient_ids = set(ingredient_ids) - existing_ingredient_ids
-        if len(set(ingredient_ids)) < len(ingredient_ids):
+    def validate_ingredients(self, ingredients):
+        existing_ingredients = Ingredient.objects.all()
+        ingredient_objects = []
+
+        ingredient_names = [ingredient['id'] for ingredient in ingredients]
+        if len(ingredient_names) != len(set(ingredient_names)):
             raise serializers.ValidationError(
-                'Duplicate ingredient IDs are not allowed.')
-        if invalid_ingredient_ids:
-            raise serializers.ValidationError(
-                f'The following tags do not exist {invalid_ingredient_ids}')
-        return value
+                'Duplicate ingredients are not allowed.')
+
+        for ingredient_data in ingredients:
+            ingredient_name = ingredient_data.get('id', None)
+            amount = ingredient_data.get('amount', None)
+            try:
+                ingredient_obj = existing_ingredients.get(name=ingredient_name)
+            except Ingredient.DoesNotExist:
+                raise serializers.ValidationError(
+                    f'Ingredient with name "{ingredient_name}" does not exist')
+
+            ingredient_objects.append({'id': ingredient_obj, 'amount': amount})
+
+        return ingredients
 
     def validate_tags(self, tags):
-        tag_ids = set(tags)
-        existing_tag_ids = set(Tag.objects.values_list('id', flat=True))
-        invalid_tag_ids = tag_ids - existing_tag_ids
-        if tag_ids < tags:
+        existing_tags = Tag.objects.all()
+        tag_names = [tag.name for tag in tags]
+
+        if len(tag_names) != len(set(tag_names)):
             raise serializers.ValidationError('Cannot include duplicate tags.')
-        if invalid_tag_ids:
+
+        invalid_tags = [tag for tag in tags if tag not in existing_tags]
+        if invalid_tags:
+            invalid_tag_names = [tag.name for tag in invalid_tags]
             raise serializers.ValidationError(
-                f'The following tags do not exist {invalid_tag_ids}')
+                f'The following tags do not exist:'
+                f'{", ".join(invalid_tag_names)}')
+
+        return tags
 
     def validate_cooking_time(self, cooking_time):
         if cooking_time < 1:
             raise serializers.ValidationError(
                 'Cooking time cannot be less than a minute.')
+        return cooking_time
 
     def create(self, validated_data):
-        ingredients_data = validated_data.pop('ingredients')
-        tags_data = validated_data.pop('tags')
-
+        print("Got into create once")
+        ingredients_data = validated_data.pop('ingredientrecipe')
+        tags = validated_data.pop('tags')
         request = self.context.get('request')
         recipe = Recipe.objects.create(author=request.user, **validated_data)
 
         for ingredient_data in ingredients_data:
-            ingredient_id = ingredient_data.get('id')
-            amount = ingredient_data.get('id')
+            ingredient = ingredient_data.get('id')
+            amount = ingredient_data.get('amount')
 
-            ingredient = Ingredient.objects.get(id=ingredient_id)
             IngredientRecipe.objects.create(recipe=recipe,
                                             ingredient=ingredient,
                                             amount=amount)
 
-        tags = Tag.objects.filter(id__in=tags_data)
         recipe.tags.set(tags)
         return recipe
 
     def update(self, recipe, validated_data):
-        ingredients_data = validated_data.pop('ingredients')
-        tags_data = validated_data.pop('tags')
+        ingredients_data = validated_data.pop('ingredientrecipe')
+        tags = validated_data.pop('tags')
         recipe.ingredients.clear()
         for ingredient_data in ingredients_data:
-            ingredient_id = ingredient_data.get('id')
-            amount = ingredient_data.get('id')
+            ingredient = ingredient_data.get('id')
+            amount = ingredient_data.get('amount')
 
-            ingredient = Ingredient.objects.get(id=ingredient_id)
             IngredientRecipe.objects.create(recipe=recipe,
                                             ingredient=ingredient,
                                             amount=amount)
-        tags = Tag.objects.filter(id__in=tags_data)
         recipe.tags.set(tags)
         return super().update(recipe, validated_data)
 
@@ -227,6 +241,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
         fields = ('user', 'recipe')
 
     def validate(self, data):
+        print('got in FavoriteSerializer validate:', data)
         current_user = data.get('user')
         recipe = data.get('recipe')
 
@@ -239,7 +254,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
             if not current_user.favorites.filter(recipe=recipe).exists():
                 raise serializers.ValidationError(
                     'This recipe is not in Favorites.')
-
+        print('Passed FavoriteSerializer validate:')
         return data
 
     def to_representation(self, instance):
@@ -257,12 +272,14 @@ class ShoppingListSerializer(serializers.ModelSerializer):
         recipe = data.get('recipe')
 
         if self.context['request'].method == 'POST':
-            if current_user.shopping_list.filter(recipe=recipe).exists():
+            if current_user.recipes_in_shopping_list.filter(
+                    recipe=recipe).exists():
                 raise serializers.ValidationError(
                     'This recipe is already in Shopping List.')
 
         if self.context['request'].method == 'DELETE':
-            if not current_user.shopping_list.filter(recipe=recipe).exists():
+            if not current_user.recipes_in_shopping_list.filter(
+                    recipe=recipe).exists():
                 raise serializers.ValidationError(
                     'This recipe is not in Shopping List.')
 

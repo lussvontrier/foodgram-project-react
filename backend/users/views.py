@@ -18,9 +18,9 @@ class FoodgramUserViewSet(UserViewSet):
 
     @action(detail=True, methods=('post', 'delete'),
             permission_classes=(IsAuthenticated,))
-    def subscribe(self, request, pk):
+    def subscribe(self, request, id):
         subscriber = request.user
-        subscription_target = get_object_or_404(FoodgramUser, pk=pk)
+        subscription_target = get_object_or_404(FoodgramUser, pk=id)
 
         if subscriber == subscription_target:
             raise ValidationError({'error': 'Cannot subscribe to yourself'})
@@ -46,7 +46,12 @@ class FoodgramUserViewSet(UserViewSet):
     @action(detail=False, permission_classes=(IsAuthenticated,))
     def subscriptions(self, request):
         current_user = request.user
-        subscriptions = current_user.subscriptions.all()
+        subscription_objects = Subscription.objects.filter(
+            subscriber=current_user)
+        subscribed_users = subscription_objects.values_list(
+            'subscribed_to', flat=True)
+
+        subscriptions = FoodgramUser.objects.filter(id__in=subscribed_users)
 
         page = self.paginate_queryset(subscriptions)
         serializer = SubscriptionSerializer(page,
