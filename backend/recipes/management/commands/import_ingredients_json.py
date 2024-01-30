@@ -4,6 +4,37 @@ from recipes.models import Ingredient
 
 
 class Command(BaseCommand):
+    """
+    Import ingredients from a JSON file into the database.
+
+    This management command is used to populate the database with ingredients
+    by reading data from a JSON file. It should be called from the command line
+    using the following format:
+
+    python manage.py import_ingredients
+
+    The JSON file containing ingredient data should be located at
+    'recipes/data/ingredients.json'.
+    The JSON file should have the following structure for each ingredient:
+    {
+        "name": "Ingredient Name",
+        "measurement_unit": "Unit of Measurement"
+    }
+    Example JSON file content:
+    [
+        {
+            "name": "Flour",
+            "measurement_unit": "grams"
+        },
+        {
+            "name": "Sugar",
+            "measurement_unit": "grams"
+        },
+        ...
+    ]
+    Upon successful execution, this command will import the ingredients
+    into the database and display a success message.
+    """
     help = 'Import ingredients from a JSON file into the database'
 
     def handle(self, *args, **kwargs):

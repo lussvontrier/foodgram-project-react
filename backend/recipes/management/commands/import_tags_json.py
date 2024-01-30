@@ -4,6 +4,42 @@ from recipes.models import Tag
 
 
 class Command(BaseCommand):
+    """
+    Import tags from a JSON file into the database.
+
+    This management command is used to populate the database with tags
+    by reading data from a JSON file. It should be called from the command line
+    using the following format:
+
+    python manage.py import_tags
+
+    The JSON file containing tag data should be located at
+    'recipes/data/tags.json'.
+    The JSON file should have the following structure for each tag:
+
+    {
+        "name": "Tag Name",
+        "color": "Tag Color",
+        "slug": "Tag Slug"
+    }
+
+    Example JSON file content:
+    [
+        {
+            "name": "Dessert",
+            "color": "#FF5733",
+            "slug": "dessert"
+        },
+        {
+            "name": "Breakfast",
+            "color": "#E6DF44",
+            "slug": "breakfast"
+        },
+        ...
+    ]
+    Upon successful execution, this command will import the tags into the database
+    and display success messages for each tag created.
+    """
     help = 'Import tags from tags.json'
 
     def handle(self, *args, **options):
