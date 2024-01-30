@@ -16,6 +16,13 @@ class FoodgramUserViewSet(UserViewSet):
     serializer_class = FoodgramUserSerializer
     pagination_class = CustomPageNumberPagination
 
+    # @action(detail=False, methods=('get'),
+    #         permission_classes=(IsAuthenticated,))
+    # def me(self, request):
+    #     user = request.user
+    #     serializer = FoodgramUserSerializer(user)
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
+
     @action(detail=True, methods=('post', 'delete'),
             permission_classes=(IsAuthenticated,))
     def subscribe(self, request, id):
@@ -46,13 +53,8 @@ class FoodgramUserViewSet(UserViewSet):
     @action(detail=False, permission_classes=(IsAuthenticated,))
     def subscriptions(self, request):
         current_user = request.user
-        subscription_objects = Subscription.objects.filter(
-            subscriber=current_user)
-        subscribed_users = subscription_objects.values_list(
-            'subscribed_to', flat=True)
-
-        subscriptions = FoodgramUser.objects.filter(id__in=subscribed_users)
-
+        subscriptions = FoodgramUser.objects.filter(
+            subscribers__subscriber=current_user)
         page = self.paginate_queryset(subscriptions)
         serializer = SubscriptionSerializer(page,
                                             many=True,

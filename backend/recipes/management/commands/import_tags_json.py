@@ -37,8 +37,8 @@ class Command(BaseCommand):
         },
         ...
     ]
-    Upon successful execution, this command will import the tags into the database
-    and display success messages for each tag created.
+    Upon successful execution, this command will import the tags into the
+    database and display success messages for each tag created.
     """
     help = 'Import tags from tags.json'
 

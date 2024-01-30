@@ -89,7 +89,6 @@ class RecipeViewSet(ModelViewSet):
     @action(detail=True, methods=('post',),
             permission_classes=(IsAuthenticated,))
     def favorite(self, request, pk):
-        print("got into favorite action func")
         recipe = get_object_or_404(Recipe, id=pk)
         data = {
             'user': request.user.id,

@@ -104,7 +104,10 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     is_in_shopping_cart = serializers.SerializerMethodField()
     ingredients = IngredientRecipeReadSerializer(many=True,
                                                  source='ingredientrecipe')
-    image = Base64ImageField(max_length=None)
+    image = serializers.SerializerMethodField(
+        'get_image',
+        read_only=True,
+    )
 
     class Meta:
         model = Recipe
@@ -112,13 +115,23 @@ class RecipeReadSerializer(serializers.ModelSerializer):
                   'text', 'author', 'tags', 'ingredients',
                   'is_favorited', 'is_in_shopping_cart')
 
+    def get_image(self, obj):
+        if obj.image:
+            return obj.image.url
+        return None
+
     def get_is_favorited(self, obj):
         current_user = self.context.get('request').user
-        return obj.favorited_by.filter(user=current_user).exists()
+        if current_user.is_authenticated:
+            return obj.favorited_by.filter(user=current_user).exists()
+        return False
 
     def get_is_in_shopping_cart(self, obj):
         current_user = self.context.get('request').user
-        return obj.added_to_shopping_list_by.filter(user=current_user).exists()
+        if current_user.is_authenticated:
+            return obj.added_to_shopping_list_by.filter(
+                user=current_user).exists()
+        return False
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
