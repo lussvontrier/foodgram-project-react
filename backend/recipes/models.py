@@ -19,7 +19,7 @@ class Tag(models.Model):
                 regex='^#(?:[0-9a-fA-F]{3}){1,2}$',
                 message='Enter a valid HEX color',
             ),
-            ],
+        ],
     )
     slug = models.SlugField(
         'Slug',
