@@ -17,25 +17,21 @@ services:
     volumes:
       - static:/backend_static
       - media:/app/media/
-    depends_on:
-      - db
   frontend:
     image: lussvontrier/foodgram_frontend
     env_file: .env
+    command: cp -r /app/build/. /static/
     volumes:
-      - ../frontend/:/app/result_build/
-    depends_on:
-      - backend
+      - static:/static
   nginx:
     image: nginx:1.19.3
     env_file: .env
     ports:
       - "8000:80"
-    depends_on:
-      - backend
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - ../frontend/build:/usr/share/nginx/html/
+      - static:/usr/share/nginx/html/
       - ../docs/:/usr/share/nginx/html/api/docs/
-      - static:/var/html/static/
-      - media:/var/html/media/
+      - media:/media
+    depends_on:
+      - backend
