@@ -127,3 +127,7 @@ DJOSER = {
         'user_list': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
     },
 }
+
+MAX_PAGE_SIZE = 100
+PAGE_SIZE = 6
+DEFAULT_PAGE_SIZE = 6

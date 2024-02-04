@@ -1,11 +1,12 @@
 from rest_framework.pagination import PageNumberPagination
 
+from foodgram_backend.settings import (
+    MAX_PAGE_SIZE, PAGE_SIZE, DEFAULT_PAGE_SIZE
+)
 
-class CustomPageNumberPagination(PageNumberPagination):
+
+class ApiPageNumberPagination(PageNumberPagination):
     page_size_query_param = 'limit'
-    max_page_size = 100
-    page_size = 6
-
-
-class ApiPageNumberPagination(CustomPageNumberPagination):
-    default_page_size = 6
+    max_page_size = MAX_PAGE_SIZE
+    page_size = PAGE_SIZE
+    default_page_size = DEFAULT_PAGE_SIZE
