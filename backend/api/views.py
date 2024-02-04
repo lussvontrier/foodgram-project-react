@@ -1,24 +1,73 @@
-
-from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
-from rest_framework.decorators import action
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.permissions import (IsAuthenticatedOrReadOnly,
-                                        IsAuthenticated)
-
-from django_filters.rest_framework import DjangoFilterBackend
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import (
+    IsAuthenticated, IsAuthenticatedOrReadOnly
+)
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from rest_framework import status
 
-from recipes.models import (Tag, Ingredient, Recipe,
-                            FavoriteRecipe, ShoppingList)
-from api.pagination import ApiPageNumberPagination
-from api.filters import RecipeFilter, IngredientFilter
+from api.filters import IngredientFilter, RecipeFilter
+from api.pagination import ApiPageNumberPagination, CustomPageNumberPagination
 from api.permissions import IsAuthorOrAdminOrReadOnly
 from api.serializers import (
-    TagSerializer, IngredientSerializer,
-    RecipeReadSerializer, RecipeWriteSerializer,
-    FavoriteSerializer, ShoppingListSerializer)
+    FavoriteSerializer, FoodgramUserSerializer, IngredientSerializer,
+    RecipeReadSerializer, RecipeWriteSerializer, ShoppingListSerializer,
+    SubscriptionSerializer, TagSerializer, SubscribeUnsubscribeSerializer
+)
+from recipes.models import (
+    Recipe, Tag, Ingredient, FavoriteRecipe, ShoppingList
+)
+from users.models import FoodgramUser, Subscription
+
+
+class FoodgramUserViewSet(UserViewSet):
+    queryset = FoodgramUser.objects.all()
+    serializer_class = FoodgramUserSerializer
+    pagination_class = CustomPageNumberPagination
+
+    @action(detail=True, methods=('post',),
+            permission_classes=(IsAuthenticated,))
+    def subscribe(self, request, id):
+        data = {
+            'subscriber': request.user.id,
+            'subscribed_to': id
+        }
+        serializer = SubscribeUnsubscribeSerializer(
+            data=data,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @subscribe.mapping.delete
+    def unsubscribe(self, request, id):
+        subscriber = request.user
+        subscription_target = get_object_or_404(FoodgramUser, pk=id)
+        deleted, _ = Subscription.objects.filter(
+            subscriber=subscriber, subscribed_to=subscription_target
+        ).delete()
+
+        if deleted:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            raise ValidationError({'error': 'Subscription does not exist'})
+
+    @action(detail=False, permission_classes=(IsAuthenticated,))
+    def subscriptions(self, request):
+        current_user = request.user
+        subscriptions = FoodgramUser.objects.filter(
+            subscribers__subscriber=current_user)
+        page = self.paginate_queryset(subscriptions)
+        serializer = SubscriptionSerializer(page,
+                                            many=True,
+                                            context={'request': request})
+        return self.get_paginated_response(serializer.data)
 
 
 class TagViewSet(ReadOnlyModelViewSet):

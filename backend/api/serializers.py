@@ -3,9 +3,10 @@ from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework.fields import SerializerMethodField
 
 from api.base_serializers import Base64ImageField
-from users.models import FoodgramUser
+from users.models import FoodgramUser, Subscription
 from recipes.models import (
-    Tag, Ingredient, Recipe, FavoriteRecipe, ShoppingList, IngredientRecipe)
+    Tag, Ingredient, Recipe, FavoriteRecipe, ShoppingList, IngredientRecipe
+)
 
 
 class FoodgramUserCreateSerializer(UserCreateSerializer):
@@ -57,6 +58,30 @@ class SubscriptionSerializer(FoodgramUserSerializer):
 
         serializer = RecipeSummarySerializer(recipes, many=True)
         return serializer.data
+
+
+class SubscribeUnsubscribeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subscription
+        fields = ('subscriber', 'subscribed_to')
+
+    def validate(self, data):
+        subscriber = data.get('subscriber')
+        subscription_target = data.get('subscribed_to')
+
+        if subscriber == subscription_target:
+            raise serializers.ValidationError(
+                {'error': 'Cannot subscribe to yourself'}
+            )
+
+        if Subscription.objects.filter(
+                subscriber=subscriber,
+                subscribed_to=subscription_target).exists():
+            raise serializers.ValidationError(
+                {'error': 'Subscription already exists'}
+            )
+
+        return data
 
 
 class TagSerializer(serializers.ModelSerializer):

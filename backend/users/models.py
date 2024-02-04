@@ -6,23 +6,33 @@ USER_EMAIL_FIELD_MAX_LENGTH = 254
 
 
 class FoodgramUser(AbstractUser):
-    email = models.EmailField('Email Address',
-                              unique=True,
-                              max_length=USER_EMAIL_FIELD_MAX_LENGTH)
-    username = models.CharField('Username',
-                                unique=True,
-                                max_length=USER_FIELD_MAX_LENGTH)
-    first_name = models.CharField('First Name',
-                                  max_length=USER_FIELD_MAX_LENGTH)
-    last_name = models.CharField('Last Name',
-                                 max_length=USER_FIELD_MAX_LENGTH)
-    password = models.CharField('Password',
-                                max_length=USER_FIELD_MAX_LENGTH)
+    email = models.EmailField(
+        'Email Address',
+        unique=True,
+        max_length=USER_EMAIL_FIELD_MAX_LENGTH
+    )
+    first_name = models.CharField(
+        'First Name',
+        max_length=USER_FIELD_MAX_LENGTH
+    )
+    last_name = models.CharField(
+        'Last Name',
+        max_length=USER_FIELD_MAX_LENGTH
+    )
+    password = models.CharField(
+        'Password',
+        max_length=USER_FIELD_MAX_LENGTH
+    )
+    pub_date = models.DateTimeField(
+        verbose_name='Date of creation.',
+        auto_now_add=True
+    )
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ('username', 'password', 'first_name', 'last_name')
 
     class Meta:
-        ordering = ('-id',)
+        ordering = ('-pub_date',)
         verbose_name = 'User'
         verbose_name_plural = 'Users'
 
@@ -45,7 +55,7 @@ class Subscription(models.Model):
     )
 
     class Meta:
-        ordering = ('-id',)
+        ordering = ('-subscriber', 'subscribed_to')
         verbose_name = 'Subscription'
         verbose_name_plural = 'Subscriptions'
         constraints = [
