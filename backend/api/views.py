@@ -16,11 +16,11 @@ from api.pagination import ApiPageNumberPagination, CustomPageNumberPagination
 from api.permissions import IsAuthorOrAdminOrReadOnly
 from api.serializers import (
     FavoriteSerializer, FoodgramUserSerializer, IngredientSerializer,
-    RecipeReadSerializer, RecipeWriteSerializer, ShoppingListSerializer,
+    RecipeReadSerializer, RecipeWriteSerializer, ShoppingCartSerializer,
     SubscriptionSerializer, TagSerializer, SubscribeUnsubscribeSerializer
 )
 from recipes.models import (
-    Recipe, Tag, Ingredient, FavoriteRecipe, ShoppingList
+    Recipe, Tag, Ingredient, FavoriteRecipe, ShoppingCart
 )
 from users.models import FoodgramUser, Subscription
 
@@ -103,7 +103,7 @@ class RecipeViewSet(ModelViewSet):
     @action(detail=False, methods=('get',),
             permission_classes=(IsAuthenticated,))
     def download_shopping_cart(self, request):
-        shopping_list_items = ShoppingList.objects.filter(user=request.user)
+        shopping_list_items = ShoppingCart.objects.filter(user=request.user)
 
         shopping_cart_content = {}
 
@@ -170,7 +170,7 @@ class RecipeViewSet(ModelViewSet):
             'user': request.user.id,
             'recipe': pk
         }
-        serializer = ShoppingListSerializer(data=data,
+        serializer = ShoppingCartSerializer(data=data,
                                             context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -183,11 +183,11 @@ class RecipeViewSet(ModelViewSet):
             'user': request.user.id,
             'recipe': pk
         }
-        serializer = ShoppingListSerializer(data=data,
+        serializer = ShoppingCartSerializer(data=data,
                                             context={'request': request})
         serializer.is_valid(raise_exception=True)
 
         current_user = request.user
-        ShoppingList.objects.get(user=current_user, recipe=recipe).delete()
+        ShoppingCart.objects.get(user=current_user, recipe=recipe).delete()
         return Response({'detail': 'Recipe removed from Shopping Cart.'},
                         status=status.HTTP_204_NO_CONTENT)

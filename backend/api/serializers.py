@@ -5,7 +5,7 @@ from rest_framework.fields import SerializerMethodField
 from api.base_serializers import Base64ImageField
 from users.models import FoodgramUser, Subscription
 from recipes.models import (
-    Tag, Ingredient, Recipe, FavoriteRecipe, ShoppingList, IngredientRecipe
+    Tag, Ingredient, Recipe, FavoriteRecipe, ShoppingCart, IngredientRecipe
 )
 
 
@@ -148,13 +148,13 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     def get_is_favorited(self, obj):
         current_user = self.context.get('request').user
         if current_user.is_authenticated:
-            return obj.favorited_by.filter(user=current_user).exists()
+            return obj.favoriterecipe.filter(user=current_user).exists()
         return False
 
     def get_is_in_shopping_cart(self, obj):
         current_user = self.context.get('request').user
         if current_user.is_authenticated:
-            return obj.added_to_shopping_list_by.filter(
+            return obj.shoppingcart.filter(
                 user=current_user).exists()
         return False
 
@@ -289,12 +289,12 @@ class FavoriteSerializer(serializers.ModelSerializer):
         recipe = data.get('recipe')
 
         if self.context['request'].method == 'POST':
-            if current_user.favorites.filter(recipe=recipe).exists():
+            if current_user.favoriterecipe.filter(recipe=recipe).exists():
                 raise serializers.ValidationError(
                     'This recipe is already in Favorites.')
 
         if self.context['request'].method == 'DELETE':
-            if not current_user.favorites.filter(recipe=recipe).exists():
+            if not current_user.favoriterecipe.filter(recipe=recipe).exists():
                 raise serializers.ValidationError(
                     'This recipe is not in Favorites.')
         return data
@@ -304,9 +304,9 @@ class FavoriteSerializer(serializers.ModelSerializer):
         return RecipeSummarySerializer(recipe).data
 
 
-class ShoppingListSerializer(serializers.ModelSerializer):
+class ShoppingCartSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ShoppingList
+        model = ShoppingCart
         fields = ('user', 'recipe')
 
     def validate_recipe(self, recipe):
@@ -320,13 +320,13 @@ class ShoppingListSerializer(serializers.ModelSerializer):
         recipe = data.get('recipe')
 
         if self.context['request'].method == 'POST':
-            if current_user.recipes_in_shopping_list.filter(
+            if current_user.shoppingcart.filter(
                     recipe=recipe).exists():
                 raise serializers.ValidationError(
                     'This recipe is already in Shopping List.')
 
         if self.context['request'].method == 'DELETE':
-            if not current_user.recipes_in_shopping_list.filter(
+            if not current_user.shoppingcart.filter(
                     recipe=recipe).exists():
                 raise serializers.ValidationError(
                     'This recipe is not in Shopping List.')
