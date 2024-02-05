@@ -6,14 +6,13 @@ from djoser.views import UserViewSet
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import (
-    AllowAny, IsAuthenticated
-)
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from api.filters import IngredientFilter, RecipeFilter
 from api.pagination import ApiPageNumberPagination
+from api.permissions import IsAuthorOrAdminOrReadOnly
 from api.serializers import (
     FavoriteSerializer, FoodgramUserSerializer, IngredientSerializer,
     RecipeReadSerializer, RecipeWriteSerializer, ShoppingCartSerializer,
@@ -34,7 +33,7 @@ class FoodgramUserViewSet(UserViewSet):
         if self.action == 'me':
             return (IsAuthenticated(),)
 
-        return (AllowAny(),)
+        return super().get_permissions()
 
     @action(detail=True, methods=('post',),
             permission_classes=(IsAuthenticated,))
@@ -100,6 +99,7 @@ class RecipeViewSet(ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     serializer_class = RecipeWriteSerializer
+    permission_classes = IsAuthorOrAdminOrReadOnly
 
     def get_serializer_class(self):
         if self.request.method in ('POST', 'PATCH'):
@@ -150,7 +150,7 @@ class RecipeViewSet(ModelViewSet):
     def base_delete_action(self, request, pk, model_class):
         recipe = get_object_or_404(Recipe, id=pk)
 
-        deleted, _ = model_class.objects.get(
+        deleted, _ = model_class.objects.filter(
             user=request.user, recipe=recipe
         ).delete()
 

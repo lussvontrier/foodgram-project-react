@@ -184,6 +184,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         if len(ingredient_names) != len(set(ingredient_names)):
             raise serializers.ValidationError(
                 'Duplicate ingredients are not allowed.')
+        return ingredients
 
     def validate_tags(self, tags):
         tag_names = [tag.name for tag in tags]
