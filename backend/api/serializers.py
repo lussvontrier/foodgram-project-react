@@ -4,7 +4,7 @@ from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 from rest_framework.validators import UniqueTogetherValidator
 
-from api.base_fields import Base64ImageField
+from api.fields import Base64ImageField
 from recipes.models import (
     Tag, Ingredient, Recipe, FavoriteRecipe, ShoppingCart, IngredientRecipe
 )
@@ -57,6 +57,13 @@ class SubscribeUnsubscribeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
         fields = ('subscriber', 'subscribed_to')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Subscription.objects.all(),
+                fields=('subscriber', 'subscribed_to'),
+                message='Subscription already exists'
+            )
+        ]
 
     def validate(self, data):
         subscriber = data.get('subscriber')
@@ -65,13 +72,6 @@ class SubscribeUnsubscribeSerializer(serializers.ModelSerializer):
         if subscriber == subscription_target:
             raise serializers.ValidationError(
                 {'error': 'Cannot subscribe to yourself'}
-            )
-
-        if Subscription.objects.filter(
-                subscriber=subscriber,
-                subscribed_to=subscription_target).exists():
-            raise serializers.ValidationError(
-                {'error': 'Subscription already exists'}
             )
 
         return data
@@ -174,57 +174,38 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             if field_name not in data:
                 raise serializers.ValidationError(
                     f"'{field_name}' is required but missing.")
-            elif data[field_name] in [None, '', []]:
+            elif not data[field_name]:
                 raise serializers.ValidationError(
                     f"'{field_name}' cannot be empty.")
         return data
 
     def validate_ingredients(self, ingredients):
-        existing_ingredients = Ingredient.objects.all()
-        ingredient_objects = []
-
         ingredient_names = [ingredient['id'] for ingredient in ingredients]
         if len(ingredient_names) != len(set(ingredient_names)):
             raise serializers.ValidationError(
                 'Duplicate ingredients are not allowed.')
 
-        for ingredient_data in ingredients:
-            ingredient_name = ingredient_data.get('id', None)
-            amount = ingredient_data.get('amount', None)
-            try:
-                ingredient_obj = existing_ingredients.get(name=ingredient_name)
-            except Ingredient.DoesNotExist:
-                raise serializers.ValidationError(
-                    f'Ingredient with name "{ingredient_name}" does not exist')
-
-            ingredient_objects.append({'id': ingredient_obj, 'amount': amount})
-
-        return ingredients
-
     def validate_tags(self, tags):
-        existing_tags = Tag.objects.all()
         tag_names = [tag.name for tag in tags]
 
         if len(tag_names) != len(set(tag_names)):
             raise serializers.ValidationError('Cannot include duplicate tags.')
 
-        invalid_tags = [tag for tag in tags if tag not in existing_tags]
-        if invalid_tags:
-            invalid_tag_names = [tag.name for tag in invalid_tags]
-            raise serializers.ValidationError(
-                f'The following tags do not exist:'
-                f'{", ".join(invalid_tag_names)}')
-
         return tags
 
     def process_ingredients(self, recipe, ingredients_data):
+        ingredient_recipes = []
         for ingredient_data in ingredients_data:
             ingredient = ingredient_data.get('id')
             amount = ingredient_data.get('amount')
 
-            IngredientRecipe.objects.create(recipe=recipe,
-                                            ingredient=ingredient,
-                                            amount=amount)
+            ingredient_recipe = IngredientRecipe(
+                recipe=recipe,
+                ingredient=ingredient,
+                amount=amount
+            )
+            ingredient_recipes.append(ingredient_recipe)
+        IngredientRecipe.objects.bulk_create(ingredient_recipes)
 
     @transaction.atomic
     def create(self, validated_data):

@@ -3,14 +3,14 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import (
-    IsAuthenticated, AllowAny
+    AllowAny, IsAuthenticated
 )
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-from rest_framework import status
 
 from api.filters import IngredientFilter, RecipeFilter
 from api.pagination import ApiPageNumberPagination
@@ -49,7 +49,14 @@ class FoodgramUserViewSet(UserViewSet):
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        subscription_target = get_object_or_404(FoodgramUser, pk=id)
+        response_serializer = SubscriptionSerializer(
+            subscription_target, context={'request': request}
+        )
+        return Response(
+            response_serializer.data, status=status.HTTP_201_CREATED
+        )
 
     @subscribe.mapping.delete
     def unsubscribe(self, request, id):
@@ -61,8 +68,7 @@ class FoodgramUserViewSet(UserViewSet):
 
         if deleted:
             return Response(status=status.HTTP_204_NO_CONTENT)
-        else:
-            raise ValidationError({'error': 'Subscription does not exist'})
+        raise ValidationError({'error': 'Subscription does not exist'})
 
     @action(detail=False, permission_classes=(IsAuthenticated,))
     def subscriptions(self, request):
@@ -131,7 +137,7 @@ class RecipeViewSet(ModelViewSet):
 
         return self.generate_shopping_cart_content(shopping_cart_content)
 
-    def base_action(self, request, pk, serializer_class):
+    def base_create_action(self, request, pk, serializer_class):
         data = {
             'user': request.user.id,
             'recipe': pk
@@ -150,13 +156,12 @@ class RecipeViewSet(ModelViewSet):
 
         if deleted:
             return Response(status=status.HTTP_204_NO_CONTENT)
-        else:
-            raise ValidationError({'error': 'This recipe was not found.'})
+        raise ValidationError({'error': 'This recipe was not found.'})
 
     @action(detail=True, methods=('post',),
             permission_classes=(IsAuthenticated,))
     def favorite(self, request, pk):
-        return self.base_action(request, pk, FavoriteSerializer)
+        return self.base_create_action(request, pk, FavoriteSerializer)
 
     @favorite.mapping.delete
     def unfavorite(self, request, pk):
@@ -165,7 +170,7 @@ class RecipeViewSet(ModelViewSet):
     @action(detail=True, methods=('post',),
             permission_classes=(IsAuthenticated,))
     def shopping_cart(self, request, pk):
-        return self.base_action(request, pk, ShoppingCartSerializer)
+        return self.base_create_action(request, pk, ShoppingCartSerializer)
 
     @shopping_cart.mapping.delete
     def remove_from_shopping_cart(self, request, pk):
