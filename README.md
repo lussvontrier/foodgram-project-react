@@ -8,7 +8,7 @@ A website for food lovers to register, view, add recipes, favorite other users' 
 
 # Techstack
 
-- Python (backend language)
+- Python 3.9 (backend language)
 - Django (backend framework)
 - Postgres (db)
 - Gunicorn (intermediate HTTP server)
@@ -140,6 +140,6 @@ Content-Type: application/json
 # Author 
 @lussvontrier
 
-
+You can find the project at https://myfoodgramapp.sytes.net
 
 

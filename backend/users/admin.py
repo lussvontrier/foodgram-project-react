@@ -8,12 +8,11 @@ from users.models import FoodgramUser, Subscription
 @admin.register(FoodgramUser)
 class FoodgramUserAdmin(UserAdmin):
     list_display = (
-        'id', 'username', 'email', 'first_name',
-        'last_name', 'pub_date'
+        'id', 'username', 'email', 'first_name', 'last_name'
     )
     list_filter = ('email', 'username')
     search_fields = ('id', 'username')
-    ordering = ('-pub_date',)
+    ordering = ('username',)
 
 
 @admin.register(Subscription)

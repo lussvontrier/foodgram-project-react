@@ -1,5 +1,5 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.db import models
 
 USER_FIELD_MAX_LENGTH = 150
 USER_EMAIL_FIELD_MAX_LENGTH = 254
@@ -23,16 +23,12 @@ class FoodgramUser(AbstractUser):
         'Password',
         max_length=USER_FIELD_MAX_LENGTH
     )
-    pub_date = models.DateTimeField(
-        verbose_name='Date of creation.',
-        auto_now_add=True
-    )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ('username', 'password', 'first_name', 'last_name')
 
     class Meta:
-        ordering = ('-pub_date',)
+        ordering = ('username',)
         verbose_name = 'User'
         verbose_name_plural = 'Users'
 
@@ -69,4 +65,4 @@ class Subscription(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.subscriber} subscribes to {self.subscribed_to}"
+        return f'{self.subscriber} subscribes to {self.subscribed_to}'
