@@ -1,12 +1,16 @@
-from django.db import models
+from colorfield.fields import ColorField
 from django.conf import settings
 from django.core.validators import (
-    RegexValidator, MinValueValidator, MaxValueValidator
+    MaxValueValidator, MinValueValidator
 )
-from colorfield.fields import ColorField
+from django.db import models
+
 
 FIELD_MAX_LENGTH = 200
 COLOR_FIELD_MAX_LENGTH = 7
+AMOUNT_FIELD_DEFAULT = 1
+MIN_VALUE_VALIDATOR = 1
+MAX_VALUE_VALIDATOR = 32763
 
 
 class Tag(models.Model):
@@ -23,8 +27,7 @@ class Tag(models.Model):
     slug = models.SlugField(
         'Slug',
         max_length=FIELD_MAX_LENGTH,
-        unique=True,
-        validators=[RegexValidator(regex='^[-a-zA-Z0-9_]+$')]
+        unique=True
     )
 
     class Meta:
@@ -47,6 +50,12 @@ class Ingredient(models.Model):
         ordering = ('name', 'measurement_unit')
         verbose_name = 'Ingredient'
         verbose_name_plural = 'Ingredients'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('name', 'measurement_unit'),
+                name='unique_name_measurement_unit'
+            )
+        ]
 
     def __str__(self):
         return self.name
@@ -64,7 +73,7 @@ class Recipe(models.Model):
     image = models.ImageField('Image', upload_to='recipes/images/')
     cooking_time = models.PositiveIntegerField(
         'Cooking Time',
-        validators=[MinValueValidator(1)]
+        validators=[MinValueValidator(MIN_VALUE_VALIDATOR)]
     )
     pub_date = models.DateTimeField(
         verbose_name='Date of creation.',
@@ -102,10 +111,10 @@ class IngredientRecipe(models.Model):
     )
     amount = models.PositiveSmallIntegerField(
         'Ingredient Amount',
-        default=1,
+        default=AMOUNT_FIELD_DEFAULT,
         validators=[
-            MinValueValidator(1),
-            MaxValueValidator(3000)
+            MinValueValidator(MIN_VALUE_VALIDATOR),
+            MaxValueValidator(MAX_VALUE_VALIDATOR)
         ],
     )
 
@@ -135,10 +144,16 @@ class UserRecipeBaseModel(models.Model):
 
 class FavoriteRecipe(UserRecipeBaseModel):
 
-    class Meta:
+    class Meta(UserRecipeBaseModel.Meta):
         verbose_name = 'Favorite Recipe'
         verbose_name_plural = 'Favorite Recipes'
         default_related_name = 'favoriterecipe'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name='unique_user_recipe_for_favoriterecipe'
+            )
+        ]
 
     def __str__(self):
         return (
@@ -148,12 +163,18 @@ class FavoriteRecipe(UserRecipeBaseModel):
 
 class ShoppingCart(UserRecipeBaseModel):
 
-    class Meta:
-        verbose_name = 'Shopping List'
-        verbose_name_plural = 'Shopping Lists'
+    class Meta(UserRecipeBaseModel.Meta):
+        verbose_name = 'Shopping Cart'
+        verbose_name_plural = 'Shopping Carts'
         default_related_name = 'shoppingcart'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name='unique_user_recipe_for_shoppingcart'
+            )
+        ]
 
     def __str__(self):
         return (
-            f'{self.recipe} added to shopping list by {self.user}'
+            f'{self.recipe} added to shopping cart by {self.user}'
         )
