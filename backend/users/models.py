@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from users.validators import username_validator
+
 USER_FIELD_MAX_LENGTH = 150
 USER_EMAIL_FIELD_MAX_LENGTH = 254
 
@@ -10,6 +12,12 @@ class FoodgramUser(AbstractUser):
         'Email Address',
         unique=True,
         max_length=USER_EMAIL_FIELD_MAX_LENGTH
+    )
+    username = models.CharField(
+        'Username',
+        unique=True,
+        validators=(username_validator,),
+        max_length=USER_FIELD_MAX_LENGTH
     )
     first_name = models.CharField(
         'First Name',
@@ -25,7 +33,7 @@ class FoodgramUser(AbstractUser):
     )
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ('username', 'first_name', 'last_name')
+    REQUIRED_FIELDS = ('username', 'password', 'first_name', 'last_name')
 
     class Meta:
         ordering = ('username',)
