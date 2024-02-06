@@ -99,7 +99,7 @@ class RecipeViewSet(ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     serializer_class = RecipeWriteSerializer
-    permission_classes = IsAuthorOrAdminOrReadOnly
+    permission_classes = (IsAuthorOrAdminOrReadOnly,)
 
     def get_serializer_class(self):
         if self.request.method in ('POST', 'PATCH'):
