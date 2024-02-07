@@ -1,6 +1,6 @@
 # Workflow Status
 
-[![Workflow Status](https://github.com/lussvontrier/kittygram_final/actions/workflows/main.yml/badge.svg)](https://github.com/lussvontrier/kittygram_final/actions)
+[![Workflow Status](https://github.com/lussvontrier/foodgram-project-react/actions/workflows/main.yml/badge.svg)](https://github.com/lussvontrier/foodgram-project-react/actions)
 
 # About
 
